@@ -1,0 +1,13 @@
+[
+  {
+    "origin": [
+      "http://localhost:3000",
+      "http://localhost:3006",
+      "https://petgo-86d54.web.app",
+      "https://petgo-86d54.firebaseapp.com"
+    ],
+    "method": ["GET", "POST", "PUT", "DELETE", "HEAD"],
+    "responseHeader": ["Content-Type", "x-goog-resumable", "Access-Control-Allow-Origin"],
+    "maxAgeSeconds": 3600
+  }
+]
