@@ -2,6 +2,7 @@ import "./globals.css";
 import { Geist, Geist_Mono } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import Footer from "./components/Footer";
+import { Analytics } from "@vercel/analytics/react"; // ✅ 추가
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -42,6 +43,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
         {/* ✅ Global Footer */}
         <Footer />
+
+        {/* ✅ Vercel Web Analytics */}
+        <Analytics /> 
       </body>
     </html>
   );
