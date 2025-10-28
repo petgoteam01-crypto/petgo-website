@@ -1,6 +1,6 @@
 import "./globals.css";
 import { Geist, Geist_Mono } from "next/font/google";
-import Navbar from "@/components/Navbar"; // ✅ Header 대신 Navbar import
+import Navbar from "@/components/Navbar";
 import Footer from "./components/Footer";
 
 const geistSans = Geist({
@@ -13,9 +13,19 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// ✅ Favicon 및 메타데이터 설정
 export const metadata = {
   title: "PetGo",
   description: "Pet care made simple with PetGo",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -24,12 +34,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white`}
       >
-        {/* ✅ Navbar (Header 대신) */}
+        {/* ✅ Navbar */}
         <Navbar />
 
-        {/* ✅ Page Content */}
+        {/* ✅ Main Content */}
         <main className="pt-20">{children}</main>
-        {/* pt-20 = fixed Navbar 가리지 않게 여백 */}
 
         {/* ✅ Global Footer */}
         <Footer />
