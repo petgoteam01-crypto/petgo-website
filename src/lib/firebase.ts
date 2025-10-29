@@ -1,8 +1,12 @@
 // src/lib/firebase.ts
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
+import {
+  getAuth,
+  setPersistence,
+  browserLocalPersistence,
+} from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage"; // ✅ 🔥 추가
+import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -17,13 +21,20 @@ const firebaseConfig = {
 // ✅ App을 SSR-safe하게 가져오기
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-// ✅ 전역 인증 유지
+// ✅ Auth 초기화
 export const auth = getAuth(app);
+
+// ✅ 로그인 세션을 모바일 포함 브라우저 전역에 유지
+setPersistence(auth, browserLocalPersistence)
+  .then(() => {
+    console.log("✅ Firebase Auth persistence enabled (localStorage)");
+  })
+  .catch((err) => {
+    console.error("❌ Auth persistence error:", err);
+  });
 
 // ✅ Firestore & Storage 초기화
 export const db = getFirestore(app);
-
-// ⚠️ Storage 초기화는 반드시 auth 이후에 호출해야 함
 export const storage = getStorage(app);
 
 export default app;
