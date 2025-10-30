@@ -226,13 +226,14 @@ export default function PostDetailPage() {
       <div className="bg-white rounded-xl shadow p-6 mb-6">
         <div className="flex items-center gap-3 mb-3">
           {/* ✅ 프로필 이미지 (default-Avatar.png 적용) */}
-          <Image
-            src={getProfileImage(post.userAvatar)}
-            alt="Avatar"
-            width={36}
-            height={36}
-            className="rounded-full border border-gray-300 object-cover"
-          />
+          <div className="relative w-9 h-9 rounded-full overflow-hidden border border-gray-300 shrink-0">
+            <Image
+              src={getProfileImage(post.userAvatar)}
+              alt={post.username || "User"}
+              fill
+              className="object-cover"
+            />
+          </div>
           <div className="flex-1">
             <p className="font-semibold text-[#111827]">{post.username}</p>
             <p className="text-xs text-gray-500">
@@ -309,13 +310,14 @@ export default function PostDetailPage() {
             <li key={c.id} className="border-b pb-3">
               <div className="flex items-start gap-3">
                 {/* ✅ 댓글 작성자 프로필 이미지 추가 */}
-                <Image
-                  src={getProfileImage(c.userAvatar)}
-                  alt={c.username}
-                  width={32}
-                  height={32}
-                  className="rounded-full border border-gray-300 object-cover shrink-0"
-                />
+                <div className="relative w-8 h-8 rounded-full overflow-hidden border border-gray-300 shrink-0">
+                  <Image
+                    src={getProfileImage(c.userAvatar)}
+                    alt={c.username || "User"}
+                    fill
+                    className="object-cover"
+                  />
+                </div>
                 <div className="flex-1">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">

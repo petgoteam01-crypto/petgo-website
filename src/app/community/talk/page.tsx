@@ -193,13 +193,14 @@ export default function PetGoTalkPage() {
               <li key={msg.id} className="border-b pb-4 last:border-b-0">
                 <div className="flex items-start gap-3">
                   {/* ✅ 프로필 이미지 (default-Avatar.png 적용) */}
-                  <Image
-                    src={getProfileImage(msg.userAvatar)}
-                    alt={msg.username}
-                    width={40}
-                    height={40}
-                    className="rounded-full border border-gray-300 object-cover shrink-0"
-                  />
+                  <div className="relative w-10 h-10 rounded-full overflow-hidden border border-gray-300 shrink-0">
+                    <Image
+                      src={getProfileImage(msg.userAvatar)}
+                      alt={msg.username || "User"}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <p className="font-semibold text-sm text-[#111827]">

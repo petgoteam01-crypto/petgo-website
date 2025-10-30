@@ -318,13 +318,14 @@ export default function CommunityPage() {
                 {/* HEADER */}
                 <header className="flex items-center gap-3 mb-2">
                   {/* ✅ 프로필 이미지 (default-Avatar.png 적용) */}
-                  <Image
-                    src={getProfileImage(post.userAvatar)}
-                    alt="User Avatar"
-                    width={28}
-                    height={28}
-                    className="rounded-full border border-gray-300 object-cover"
-                  />
+                  <div className="relative w-7 h-7 rounded-full overflow-hidden border border-gray-300 shrink-0">
+                    <Image
+                      src={getProfileImage(post.userAvatar)}
+                      alt={post.username || "User"}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
                   <div className="flex-1">
                     <p className="font-semibold text-sm">{post.username}</p>
                     <p className="text-xs text-gray-500">
@@ -365,13 +366,14 @@ export default function CommunityPage() {
                 <ul className="mt-3 text-sm text-gray-700 space-y-2">
                   {comments[post.id]?.map((c, i) => (
                     <li key={i} className="flex items-start gap-2">
-                      <Image
-                        src={getProfileImage(c.userAvatar)}
-                        alt={c.username || "User"}
-                        width={20}
-                        height={20}
-                        className="rounded-full border border-gray-300 object-cover shrink-0 mt-0.5"
-                      />
+                      <div className="relative w-5 h-5 rounded-full overflow-hidden border border-gray-300 shrink-0">
+                        <Image
+                          src={getProfileImage(c.userAvatar)}
+                          alt={c.username || "User"}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
                       <p className="flex-1">
                         <span className="font-medium">{c.username}</span>: {c.text}
                       </p>
@@ -483,13 +485,14 @@ export default function CommunityPage() {
                     <li key={msg.id} className="border-t pt-3">
                       <div className="flex items-start gap-2 mb-1">
                         {/* ✅ PetGo Talk 프로필 이미지 (default-Avatar.png 적용) */}
-                        <Image
-                          src={getProfileImage(msg.userAvatar)}
-                          alt={msg.username}
-                          width={24}
-                          height={24}
-                          className="rounded-full border border-gray-300 object-cover shrink-0"
-                        />
+                        <div className="relative w-6 h-6 rounded-full overflow-hidden border border-gray-300 shrink-0">
+                          <Image
+                            src={getProfileImage(msg.userAvatar)}
+                            alt={msg.username || "User"}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <p className="font-semibold text-xs">{msg.username}</p>
