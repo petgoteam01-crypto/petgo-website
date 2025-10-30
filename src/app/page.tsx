@@ -2,63 +2,86 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import Footer from "./components/Footer";
 import Newsletter from "./components/Newsletter";
-import { PLACES } from "./data/places"; // correct path (app/data/places.ts)
+import { PLACES } from "./data/places";
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-white text-gray-900">
-      <div className="h-20" /> {/* Navbar 높이 보정 */}
 
-      {/* ===== HERO ===== */}
-      <section className="relative w-full">
-        <div className="relative h-[56vw] max-h-[640px] min-h-[380px] w-full">
-          <video
-            className="absolute inset-0 h-full w-full object-cover"
-            autoPlay
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            poster="/hero-poster.jpg"
-          >
-            <source src="/hero.webm" type="video/webm" />
-            <source src="/hero.mp4" type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-        </div>
+{/* ===== NAVBAR (한 줄 정렬 완성 버전) ===== */}
+<header className="fixed top-0 left-0 w-full bg-white z-50 border-b border-gray-100">
+  <div className="max-w-7xl mx-auto flex items-center justify-between px-3 md:px-6 py-2 md:py-3">
+    {/* ✅ 로고만 */}
+    <Link href="/" className="flex items-center shrink-0">
+      <Image src="/petgo-logo.png" alt="PetGo Logo" width={40} height={40} />
+    </Link>
 
-        {/* Centered card */}
-        <div className="pointer-events-none absolute inset-0 flex items-center justify-center px-4">
-          <div className="pointer-events-auto bg-white/95 backdrop-blur-sm shadow-xl border rounded-md px-6 py-5 max-w-xl w-full">
-            <h1
-              className="text-center font-serif text-4xl md:text-5xl font-semibold tracking-tight"
-              style={{ color: "#4A321E" }}
-            >
-              Welcome to PetGo
-            </h1>
+    {/* ✅ 메뉴: 자동 줄바꿈 방지 + 글자 크기 반응형 */}
+    <nav className="flex items-center gap-x-3 md:gap-x-6 text-[13px] sm:text-[14px] md:text-[15px] font-medium text-[#111827] whitespace-nowrap overflow-x-auto no-scrollbar">
+      <Link href="/about" className="hover:text-[#8B6A43] transition">About Us</Link>
+      <Link href="/mobile-app" className="hover:text-[#8B6A43] transition">Mobile App</Link>
+      <Link href="/features" className="hover:text-[#8B6A43] transition">Features</Link>
+      <Link href="/community" className="hover:text-[#8B6A43] transition">Community</Link>
+      <Link href="/donation" className="hover:text-[#8B6A43] transition">Donation</Link>
+    </nav>
 
-            <p
-              className="mt-4 text-center leading-relaxed max-w-xl mx-auto text-lg md:text-xl"
-              style={{ color: "#B58963" }}
-            >
-              <span>Trusted by pet parents— offering expert care,</span>
-              <br />
-              <span>community support, and services all in one place.</span>
-            </p>
+    {/* ✅ 로그인/회원가입 버튼 (크기 자동 축소) */}
+    <div className="flex items-center gap-1 md:gap-2 shrink-0">
+      <Link
+        href="/login"
+        className="text-[13px] sm:text-[14px] text-[#4A321E] hover:underline"
+      >
+        Log In
+      </Link>
+      <Link
+        href="/signup"
+        className="text-[13px] sm:text-[14px] bg-[#8B6A43] text-white px-3 md:px-4 py-1 md:py-1.5 rounded-full hover:bg-[#745536] transition"
+      >
+        Sign Up
+      </Link>
+    </div>
+  </div>
+</header>
 
-            <div className="mt-6 flex justify-center">
-              <Link
-                href="/mobile-app"
-                className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-gray-50 transition"
-              >
-                PetGo Mobile App
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+<div className="h-16 md:h-20" /> {/* navbar offset */}
+
+{/* ===== HERO SECTION (IMAGE VERSION) ===== */}
+<section className="relative w-full h-[85vh] overflow-hidden flex items-center justify-center">
+  {/* ✅ Background image */}
+  <Image
+    src="/hero-image.jpg" // replace with your actual image filename
+    alt="Happy pet parents with their dog"
+    fill
+    priority
+    className="object-cover"
+  />
+
+  {/* ✅ Subtle overlay */}
+  <div className="absolute inset-0 bg-black/30" />
+
+  {/* ✅ Centered text box */}
+  <div className="relative z-10 bg-white/90 backdrop-blur-sm border border-gray-300 shadow-lg rounded-2xl p-8 text-center max-w-xl mx-auto">
+    <h1
+      className="font-serif text-4xl md:text-5xl font-semibold tracking-tight mb-4"
+      style={{ color: "#4A321E" }}
+    >
+      Welcome to PetGo
+    </h1>
+    <p className="text-[#B58963] text-lg leading-relaxed mb-6">
+      Trusted by pet parents— offering expert care,
+      <br />
+      community support, and services all in one place.
+    </p>
+    <Link
+      href="/mobile-app"
+      className="rounded-md border border-[#4A321E] text-[#4A321E] px-5 py-2 font-medium hover:bg-[#4A321E] hover:text-white transition"
+    >
+      PetGo Mobile App
+    </Link>
+  </div>
+</section>
+
 
       {/* ===== PET CARE GUIDE + KITCHEN + COMMUNITY + REVIEW SECTION ===== */}
       <section className="w-full border-t bg-white">
@@ -83,11 +106,9 @@ export default function Home() {
                   Pet Care Guide
                 </h2>
                 <p className="text-gray-800 text-base md:text-lg leading-7">
-                  Explore expert insights, wellness tips, and practical advice
-                  designed to keep your pet healthy, happy, and thriving.
+                  Explore expert insights, wellness tips, and practical advice designed to keep your pet healthy, happy, and thriving.
                 </p>
               </div>
-
               <div className="mt-6">
                 <Link
                   href="/pet-care-guide"
@@ -118,11 +139,9 @@ export default function Home() {
                   PetGo Kitchen
                 </h2>
                 <p className="text-gray-800 text-base md:text-lg leading-7">
-                  Pet-safe recipes for shared joy. Wholesome treats, balanced meals,
-                  and creative ideas made with love for furry friends.
+                  Pet-safe recipes for shared joy. Wholesome treats, balanced meals, and creative ideas made with love for furry friends.
                 </p>
               </div>
-
               <div className="mt-6">
                 <Link
                   href="/kitchen"
@@ -153,11 +172,9 @@ export default function Home() {
                   Community
                 </h2>
                 <p className="text-gray-800 text-base md:text-lg leading-7">
-                  Connect with devoted pet parents, share meaningful stories, and
-                  belong to a warm, expert-guided community.
+                  Connect with devoted pet parents, share meaningful stories, and belong to a warm, expert-guided community.
                 </p>
               </div>
-
               <div className="mt-6">
                 <Link
                   href="/community"
@@ -175,7 +192,7 @@ export default function Home() {
                 <div className="flex items-center gap-4 mb-4">
                   <Image
                     src="/pet-parent.jpg"
-                    alt="Happy PetGo customer with dog"
+                    alt="Happy PetGo customer"
                     width={72}
                     height={72}
                     className="h-16 w-16 rounded-full object-cover ring-2 ring-[#B58963]"
@@ -192,14 +209,12 @@ export default function Home() {
                     </div>
                   </div>
                 </div>
-
                 <p className="text-gray-800 text-base leading-7">
-                  PetGo has completely changed how I care for my dog. From finding trusted vets and groomers to discovering pet-friendly places, everything is effortless, fast, and reliable. Managing my pet’s needs is now so simple — I can book appointments, track health records, and get advice anytime.
+                  PetGo has completely changed how I care for my dog. From finding trusted vets and groomers to discovering pet-friendly places, everything is effortless, fast, and reliable.
                   <br />
-                  What truly touched me is PetGo’s heart. Knowing that 5% of what I spend goes to supporting animal shelters makes every purchase feel meaningful.”
+                  What truly touched me is PetGo’s heart. Knowing that 5% of what I spend goes to supporting animal shelters makes every purchase feel meaningful.
                 </p>
               </div>
-
               <div className="mt-6">
                 <span className="inline-flex items-center rounded-full bg-[#4A321E] px-3 py-1 text-xs font-medium text-white">
                   Premium Member

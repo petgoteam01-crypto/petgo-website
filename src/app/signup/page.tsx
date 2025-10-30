@@ -1,12 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { createUserWithEmailAndPassword, updateProfile, signOut } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export default function SignupPage() {
+  const router = useRouter();
+
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -40,15 +43,17 @@ export default function SignupPage() {
     try {
       setLoading(true);
       const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
+
       await updateProfile(userCredential.user, {
         displayName: `${form.firstName} ${form.lastName}`,
       });
 
-      // ✅ 회원가입 성공 메시지
-      alert("🎉 Account created successfully! Please sign in to continue.");
+      // ✅ 회원가입 직후 자동 로그인 방지
+      await signOut(auth);
 
-      // ✅ Sign In 페이지로 이동
-      window.location.href = "/login";
+      alert("🎉 Account created successfully! Please sign in to continue.");
+      router.push("/login");
+
     } catch (err: any) {
       let message = "Something went wrong. Please try again.";
 
@@ -67,7 +72,6 @@ export default function SignupPage() {
       setLoading(false);
     }
   };
-
 
   return (
     <main className="relative min-h-screen flex items-center justify-center bg-[#F9F6F1]">

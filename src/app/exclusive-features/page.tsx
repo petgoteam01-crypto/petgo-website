@@ -21,49 +21,6 @@ export default function ExclusiveFeaturesPage() {
         </p>
       </section>
 
-      {/* Section 2 - Two Column Layout */}
-      <section className="mx-auto max-w-7xl px-4 md:px-6 py-16 grid md:grid-cols-2 gap-12 items-center">
-        {/* Left - Image */}
-        <div className="relative w-full h-[450px]">
-          {/* Replace "exclusive-1.jpg" with your own file name in /public */}
-          <Image
-            src="/exclusive-1.jpg"
-            alt="PetGo App Preview"
-            fill
-            className="object-contain"
-            priority
-          />
-        </div>
-
-        {/* Right - Text */}
-        <div>
-          <h2
-            className="font-serif text-3xl md:text-4xl font-semibold tracking-tight mb-4"
-            style={{ color: "#4A321E" }}
-          >
-          </h2>
-          <p className="text-[#6B5A49] leading-relaxed mb-6">
-            Keep every detail of your pet’s health safe and accessible. With
-            PetGo’s Pet Journal, members can upload physical health records into
-            a secure digital format—so you’ll never have to worry about
-            misplaced papers or lost files again. All records are organized and
-            stored in your pocket, ready whenever you need them.
-          </p>
-          <p className="text-[#6B5A49] leading-relaxed mb-6">
-            Whether you’re visiting your regular vet or switching to a new
-            clinic, your pet’s full history is always at hand—saving time,
-            avoiding unnecessary checkups, and ensuring your pet receives the
-            best care without interruption.
-          </p>
-          <Link
-            href="/journal"
-            className="font-semibold hover:underline underline-offset-4"
-            style={{ color: "#4A321E" }}
-          >
-            Access Your Pet Journal &gt;
-          </Link>
-        </div>
-      </section>
 
 {/* ===== Essentials Section ===== */}
 <section className="mx-auto max-w-7xl px-4 md:px-6 py-16">
