@@ -8,25 +8,26 @@ export default function KitchenPage() {
 
   // ===== DOG RECIPES =====
   const dogRecipes = [
-    {
-      title: "Chicken & Rice Bowl",
-      desc: "A balanced homemade meal packed with lean protein and gentle grains.",
-      img: "/kitchen/chicken-ricebowl.jpg",
-      link: "/kitchen/dog/chicken-ricebowl",
-    },
-    {
-      title: "Peanut Butter Biscuits",
-      desc: "Crunchy, pet-safe treats baked with all-natural ingredients.",
-      img: "/kitchen/dog-peanut-biscuits.jpg",
-      link: "/kitchen/dog/peanut-butter-biscuits",
-    },
-    {
-      title: "Pumpkin Oat Cookies",
-      desc: "Soft and healthy bites rich in fiber for sensitive tummies.",
-      img: "/kitchen/pumpkin-oat.jpg",
-      link: "/kitchen/dog/pumpkin-oat",
-    },
-  ];
+  {
+    title: "Chicken & Rice Bowl",
+    desc: "A balanced homemade meal packed with lean protein and gentle grains.",
+    img: "/chicken-ricebowl.jpg",
+    link: "/kitchen/dog/chicken-ricebowl",
+  },
+  {
+    title: "Peanut Butter Biscuits",
+    desc: "Crunchy, pet-safe treats baked with all-natural ingredients.",
+    img: "/dog-peanut-biscuits.jpg",
+    link: "/kitchen/dog/peanut-butter-biscuits",
+  },
+  {
+    title: "Pumpkin Oat Cookies",
+    desc: "Soft and healthy bites rich in fiber for sensitive tummies.",
+    img: "/pumpkin-oat.jpg",
+    link: "/kitchen/dog/pumpkin-oat",
+  },
+];
+
 
   const recipes = dogRecipes;
 
