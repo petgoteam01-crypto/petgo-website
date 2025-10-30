@@ -43,9 +43,13 @@ export default function SignupPage() {
       await updateProfile(userCredential.user, {
         displayName: `${form.firstName} ${form.lastName}`,
       });
-      alert("🎉 Account created successfully!");
+
+      // ✅ 회원가입 성공 메시지
+      alert("🎉 Account created successfully! Please sign in to continue.");
+
+      // ✅ Sign In 페이지로 이동
+      window.location.href = "/login";
     } catch (err: any) {
-      // ✅ 사용자 친화적인 에러 문구 처리
       let message = "Something went wrong. Please try again.";
 
       if (err.code === "auth/email-already-in-use") {
@@ -63,6 +67,7 @@ export default function SignupPage() {
       setLoading(false);
     }
   };
+
 
   return (
     <main className="relative min-h-screen flex items-center justify-center bg-[#F9F6F1]">
