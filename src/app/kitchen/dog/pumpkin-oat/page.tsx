@@ -16,16 +16,16 @@ export default function PumpkinOatCookiesPage() {
         </p>
       </section>
 
-      {/* ===== IMAGE ===== */}
-      <div className="relative max-w-4xl mx-auto h-80 md:h-[420px] rounded-2xl overflow-hidden shadow-sm mb-10">
-        <Image
-          src="/kitchen/pumpkin-oat.jpg"
-          alt="Homemade Pumpkin Oat Dog Treats"
-          fill
-          className="object-cover"
-          priority
-        />
-      </div>
+     {/* ===== IMAGE ===== */}
+<div className="relative max-w-4xl mx-auto h-80 md:h-[420px] rounded-2xl overflow-hidden shadow-sm mb-10">
+  <Image
+    src="/pumpkin-oat.jpg"
+    alt="Homemade Pumpkin Oat Dog Treats"
+    fill
+    className="object-cover"
+    priority
+  />
+</div>
 
       {/* ===== CONTENT ===== */}
       <section className="max-w-4xl mx-auto px-6 space-y-12 leading-relaxed text-gray-700 text-base md:text-lg">

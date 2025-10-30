@@ -20,12 +20,12 @@ export default function ChickenRiceBowlPage() {
       {/* ===== IMAGE ===== */}
       <div className="relative max-w-4xl mx-auto h-80 md:h-[420px] rounded-2xl overflow-hidden shadow-sm mb-10">
         <Image
-          src="/kitchen/chicken-ricebowl.jpg"
-          alt="Homemade Chicken and Rice Bowl for Dogs"
-          fill
-          className="object-cover"
-          priority
-        />
+  src="/chicken-ricebowl.jpg"
+  alt="Homemade Chicken and Rice Bowl for Dogs"
+  fill
+  className="object-cover"
+  priority
+/>
       </div>
 
       {/* ===== CONTENT ===== */}
