@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Heart, MessageCircle, Share2, ArrowLeft } from "lucide-react";
+import { Heart, MessageCircle, ArrowLeft } from "lucide-react";
 import {
   collection,
   doc,
@@ -16,6 +16,7 @@ import {
   arrayUnion,
   arrayRemove,
   deleteDoc,
+  getDoc,
 } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 
@@ -42,6 +43,14 @@ function formatTimeAgo(timestamp: any): string {
   });
 }
 
+// ✅ 프로필 이미지 헬퍼 함수
+function getProfileImage(userImage: string | null | undefined): string {
+  if (!userImage || userImage.trim() === '') {
+    return '/default-Avatar.png';
+  }
+  return userImage;
+}
+
 export default function PostDetailPage() {
   const { id } = useParams();
   const router = useRouter();
@@ -58,10 +67,34 @@ export default function PostDetailPage() {
   // === Fetch Post ===
   useEffect(() => {
     if (!id) return;
-    const unsub = onSnapshot(doc(db, "posts", id as string), (d) => {
+    const unsub = onSnapshot(doc(db, "posts", id as string), async (d) => {
       const data = d.data();
       if (data) {
-        setPost({ id: d.id, ...data });
+        // ✅ 최신 사용자 정보 가져오기
+        let latestAvatar = data.userAvatar;
+        let latestName = data.username;
+        
+        try {
+          if (data.userId) {
+            const userDocRef = doc(db, "users", data.userId);
+            const userDoc = await getDoc(userDocRef);
+            if (userDoc.exists()) {
+              const u = userDoc.data();
+              if (u.photoURL) latestAvatar = u.photoURL;
+              if (u.firstName || u.lastName)
+                latestName = `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim();
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        }
+
+        setPost({ 
+          id: d.id, 
+          ...data,
+          username: latestName || data.username || "User",
+          userAvatar: latestAvatar,
+        });
         setLikeCount(data.likes ?? 0);
         setLiked(user ? data.likedBy?.includes(user.uid) : false);
       }
@@ -76,8 +109,38 @@ export default function PostDetailPage() {
       collection(db, "posts", id as string, "comments"),
       orderBy("createdAt", "desc")
     );
-    const unsub = onSnapshot(q, (snap) => {
-      setComments(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+    const unsub = onSnapshot(q, async (snap) => {
+      // ✅ 댓글 작성자 프로필 이미지 가져오기
+      const list = await Promise.all(
+        snap.docs.map(async (d) => {
+          const data = d.data() as any;
+          let latestAvatar = data.userAvatar;
+          let latestName = data.username;
+          
+          try {
+            if (data.userId) {
+              const userDocRef = doc(db, "users", data.userId);
+              const userDoc = await getDoc(userDocRef);
+              if (userDoc.exists()) {
+                const u = userDoc.data();
+                if (u.photoURL) latestAvatar = u.photoURL;
+                if (u.firstName || u.lastName)
+                  latestName = `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim();
+              }
+            }
+          } catch (error) {
+            console.error("Error fetching user data:", error);
+          }
+          
+          return {
+            id: d.id,
+            ...data,
+            username: latestName || data.username || "User",
+            userAvatar: latestAvatar,
+          };
+        })
+      );
+      setComments(list);
     });
     return () => unsub();
   }, [id]);
@@ -89,6 +152,7 @@ export default function PostDetailPage() {
       text: commentInput.trim(),
       username: user?.displayName ?? "User",
       userId: user?.uid ?? null,
+      userAvatar: user?.photoURL ?? null,
       createdAt: serverTimestamp(),
     });
     setCommentInput("");
@@ -161,15 +225,13 @@ export default function PostDetailPage() {
       {/* Header */}
       <div className="bg-white rounded-xl shadow p-6 mb-6">
         <div className="flex items-center gap-3 mb-3">
+          {/* ✅ 프로필 이미지 (default-Avatar.png 적용) */}
           <Image
-            src={
-              post.userAvatar ||
-              "https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=200"
-            }
+            src={getProfileImage(post.userAvatar)}
             alt="Avatar"
             width={36}
             height={36}
-            className="rounded-full border border-gray-300"
+            className="rounded-full border border-gray-300 object-cover"
           />
           <div className="flex-1">
             <p className="font-semibold text-[#111827]">{post.username}</p>
@@ -193,6 +255,7 @@ export default function PostDetailPage() {
 
         <p className="text-[#111827] mb-3">{post.caption}</p>
 
+        {/* ✅ Share 버튼 제거 */}
         <div className="flex items-center gap-6 text-sm text-[#111827]">
           <button
             onClick={handleLike}
@@ -204,9 +267,6 @@ export default function PostDetailPage() {
           </button>
           <div className="flex items-center gap-1">
             <MessageCircle size={16} /> {comments.length}
-          </div>
-          <div className="flex items-center gap-1 cursor-pointer">
-            <Share2 size={16} /> Share
           </div>
           {user && post.userId === user.uid && (
             <button
@@ -247,56 +307,68 @@ export default function PostDetailPage() {
         <ul className="space-y-3">
           {comments.map((c) => (
             <li key={c.id} className="border-b pb-3">
-              <div className="flex items-start justify-between">
+              <div className="flex items-start gap-3">
+                {/* ✅ 댓글 작성자 프로필 이미지 추가 */}
+                <Image
+                  src={getProfileImage(c.userAvatar)}
+                  alt={c.username}
+                  width={32}
+                  height={32}
+                  className="rounded-full border border-gray-300 object-cover shrink-0"
+                />
                 <div className="flex-1">
-                  <p className="font-medium text-[#111827]">{c.username}</p>
-                  {editingCommentId === c.id ? (
-                    <div className="mt-2">
-                      <input
-                        type="text"
-                        value={editCommentText}
-                        onChange={(e) => setEditCommentText(e.target.value)}
-                        className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-[#8B6A43] text-[#111827] mb-2"
-                      />
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => handleUpdateComment(c.id)}
-                          className="px-3 py-1 bg-[#8B6A43] text-white rounded text-xs hover:bg-[#B58963]"
-                        >
-                          Save
-                        </button>
-                        <button
-                          onClick={() => setEditingCommentId(null)}
-                          className="px-3 py-1 border border-gray-300 text-gray-700 rounded text-xs hover:bg-gray-50"
-                        >
-                          Cancel
-                        </button>
-                      </div>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="font-medium text-[#111827]">{c.username}</p>
+                      {editingCommentId === c.id ? (
+                        <div className="mt-2">
+                          <input
+                            type="text"
+                            value={editCommentText}
+                            onChange={(e) => setEditCommentText(e.target.value)}
+                            className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-[#8B6A43] text-[#111827] mb-2"
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleUpdateComment(c.id)}
+                              className="px-3 py-1 bg-[#8B6A43] text-white rounded text-xs hover:bg-[#B58963]"
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={() => setEditingCommentId(null)}
+                              className="px-3 py-1 border border-gray-300 text-gray-700 rounded text-xs hover:bg-gray-50"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-[#111827] mt-1">{c.text}</p>
+                      )}
                     </div>
-                  ) : (
-                    <p className="text-sm text-[#111827] mt-1">{c.text}</p>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 ml-2">
-                  <p className="text-xs text-gray-500">
-                    {formatTimeAgo(c.createdAt)}
-                  </p>
-                  {user && c.userId === user.uid && editingCommentId !== c.id && (
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => startEditComment(c.id, c.text)}
-                        className="text-xs text-[#8B6A43] hover:underline"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteComment(c.id)}
-                        className="text-xs text-red-500 hover:underline"
-                      >
-                        Delete
-                      </button>
+                    <div className="flex items-center gap-2 ml-2">
+                      <p className="text-xs text-gray-500">
+                        {formatTimeAgo(c.createdAt)}
+                      </p>
+                      {user && c.userId === user.uid && editingCommentId !== c.id && (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => startEditComment(c.id, c.text)}
+                            className="text-xs text-[#8B6A43] hover:underline"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteComment(c.id)}
+                            className="text-xs text-red-500 hover:underline"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
             </li>

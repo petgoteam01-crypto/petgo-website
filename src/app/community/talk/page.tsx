@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
+import Image from "next/image";
 import {
   collection,
   onSnapshot,
@@ -40,13 +41,19 @@ function formatTimeAgo(timestamp: any): string {
   });
 }
 
+// ✅ 프로필 이미지 헬퍼 함수
+function getProfileImage(userImage: string | null | undefined): string {
+  if (!userImage || userImage.trim() === '') {
+    return '/default-Avatar.png';
+  }
+  return userImage;
+}
+
 export default function PetGoTalkPage() {
   const router = useRouter();
   const user = auth.currentUser;
   const [talkMessages, setTalkMessages] = useState<any[]>([]);
   const [talkInput, setTalkInput] = useState("");
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editText, setEditText] = useState("");
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [editMessageText, setEditMessageText] = useState("");
 
@@ -60,7 +67,7 @@ export default function PetGoTalkPage() {
           let latestAvatar = data.userAvatar;
           let latestName = data.username;
           
-          // Fetch latest user info from users collection
+          // ✅ Fetch latest user info from users collection
           try {
             if (data.userId) {
               const userDocRef = doc(db, "users", data.userId);
@@ -107,31 +114,6 @@ export default function PetGoTalkPage() {
       createdAt: serverTimestamp(),
     });
     setTalkInput("");
-  }
-
-  // === Delete Message ===
-  async function handleDelete(msgId: string) {
-    if (!confirm("Are you sure you want to delete this message?")) return;
-    await deleteDoc(doc(db, "petgoTalk", msgId));
-  }
-
-  // === Edit Message ===
-  function startEdit(msgId: string, text: string) {
-    setEditingId(msgId);
-    setEditText(text);
-  }
-
-  async function handleUpdate(msgId: string) {
-    if (!editText.trim()) return;
-    if (editText.length > 200) {
-      alert("Message must be 200 characters or less.");
-      return;
-    }
-    await updateDoc(doc(db, "petgoTalk", msgId), {
-      text: editText.trim(),
-    });
-    setEditingId(null);
-    setEditText("");
   }
 
   // === Delete Message ===
@@ -210,13 +192,13 @@ export default function PetGoTalkPage() {
             {talkMessages.map((msg) => (
               <li key={msg.id} className="border-b pb-4 last:border-b-0">
                 <div className="flex items-start gap-3">
-                  <img
-                    src={
-                      msg.userAvatar ||
-                      "https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=200"
-                    }
-                    alt="Avatar"
-                    className="w-10 h-10 rounded-full border border-gray-300"
+                  {/* ✅ 프로필 이미지 (default-Avatar.png 적용) */}
+                  <Image
+                    src={getProfileImage(msg.userAvatar)}
+                    alt={msg.username}
+                    width={40}
+                    height={40}
+                    className="rounded-full border border-gray-300 object-cover shrink-0"
                   />
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">

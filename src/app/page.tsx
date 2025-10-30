@@ -9,18 +9,18 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-white text-gray-900">
 
-{/* ===== NAVBAR (한 줄 정렬 완성 버전) ===== */}
+{/* ===== NAVBAR (완전 수정 버전) ===== */}
 <header className="fixed top-0 left-0 w-full bg-white z-50 border-b border-gray-100">
-  <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 px-3 md:px-6 py-2 md:py-3">
+  <div className="max-w-7xl mx-auto flex items-center justify-between gap-2 px-3 md:px-6 py-2.5 md:py-3">
     
-    {/* ✅ 로고 - 고정 (shrink 안됨) */}
+    {/* ✅ 로고 - 고정 */}
     <Link href="/" className="flex items-center shrink-0">
       <Image src="/petgo-logo.png" alt="PetGo Logo" width={40} height={40} />
     </Link>
 
-    {/* ✅ 메뉴 - 가로 스크롤 가능 영역 */}
-    <nav className="flex-1 overflow-x-auto overflow-y-hidden no-scrollbar">
-      <div className="flex items-center gap-x-3 md:gap-x-6 text-[13px] sm:text-[14px] md:text-[15px] font-medium text-[#111827] whitespace-nowrap min-w-max">
+    {/* ✅ 메뉴 - 가로 스크롤 (좌우 패딩으로 짤림 방지) */}
+    <nav className="flex-1 overflow-x-auto overflow-y-hidden no-scrollbar px-2">
+      <div className="flex items-center gap-x-4 md:gap-x-6 text-[13px] sm:text-[14px] md:text-[15px] font-medium text-[#111827] whitespace-nowrap min-w-max">
         <Link href="/about" className="hover:text-[#8B6A43] transition">About Us</Link>
         <Link href="/mobile-app" className="hover:text-[#8B6A43] transition">Mobile App</Link>
         <Link href="/features" className="hover:text-[#8B6A43] transition">Features</Link>
@@ -29,8 +29,8 @@ export default function Home() {
       </div>
     </nav>
 
-    {/* ✅ 로그인/회원가입 버튼 - 고정 (shrink 안됨) */}
-    <div className="flex items-center gap-1 md:gap-2 shrink-0">
+    {/* ✅ 로그인/회원가입 버튼 - 고정 */}
+    <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
       <Link
         href="/login"
         className="text-[13px] sm:text-[14px] text-[#4A321E] hover:underline whitespace-nowrap"
@@ -39,7 +39,7 @@ export default function Home() {
       </Link>
       <Link
         href="/signup"
-        className="text-[13px] sm:text-[14px] bg-[#8B6A43] text-white px-3 md:px-4 py-1 md:py-1.5 rounded-full hover:bg-[#745536] transition whitespace-nowrap"
+        className="text-[13px] sm:text-[14px] bg-[#8B6A43] text-white px-3 md:px-4 py-1.5 md:py-2 rounded-full hover:bg-[#745536] transition whitespace-nowrap"
       >
         Sign Up
       </Link>
@@ -47,7 +47,8 @@ export default function Home() {
   </div>
 </header>
 
-<div className="h-16 md:h-20" /> {/* navbar offset */}
+{/* ✅ navbar offset - 정확한 높이로 수정 */}
+<div className="h-[57px] md:h-[64px]" />
 
 {/* ===== HERO SECTION (IMAGE VERSION) ===== */}
 <section className="relative w-full h-[85vh] overflow-hidden flex items-center justify-center">

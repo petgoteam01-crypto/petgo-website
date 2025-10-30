@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Heart, MessageCircle, Share2 } from "lucide-react";
+import { Heart, MessageCircle } from "lucide-react";
 import {
   collection,
   doc,
@@ -33,7 +33,16 @@ type Comment = {
   id: string;
   username?: string;
   text: string;
+  userAvatar?: string;
 };
+
+// ✅ 프로필 이미지 헬퍼 함수
+function getProfileImage(userImage: string | null | undefined): string {
+  if (!userImage || userImage.trim() === '') {
+    return '/default-Avatar.png';
+  }
+  return userImage;
+}
 
 // Time format function
 function formatTimeAgo(timestamp: any): string {
@@ -80,6 +89,8 @@ export default function CommunityPage() {
           const data = d.data() as any;
           let latestAvatar = data.userAvatar;
           let latestName = data.username;
+          
+          // ✅ 최신 사용자 정보 가져오기
           try {
             if (data.userId) {
               const userDoc = await getDoc(doc(db, "users", data.userId));
@@ -90,10 +101,14 @@ export default function CommunityPage() {
                   latestName = `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim();
               }
             }
-          } catch {}
+          } catch (error) {
+            console.error("Error fetching user data:", error);
+          }
+          
           return {
             id: d.id,
-            username: latestName || "User",
+            userId: data.userId,
+            username: latestName || data.username || "User",
             text: data.text ?? "",
             caption: data.caption ?? "",
             imageUrl: data.imageUrl ?? "",
@@ -119,8 +134,36 @@ export default function CommunityPage() {
         collection(db, "posts", p.id, "comments"),
         orderBy("createdAt", "desc")
       );
-      const unsub = onSnapshot(q, (snap) => {
-        const list = snap.docs.map((d) => d.data() as any);
+      const unsub = onSnapshot(q, async (snap) => {
+        // ✅ 댓글 작성자 프로필 정보도 가져오기
+        const list = await Promise.all(
+          snap.docs.map(async (d) => {
+            const data = d.data() as any;
+            let latestAvatar = data.userAvatar;
+            let latestName = data.username;
+            
+            try {
+              if (data.userId) {
+                const userDoc = await getDoc(doc(db, "users", data.userId));
+                if (userDoc.exists()) {
+                  const u = userDoc.data();
+                  if (u.photoURL) latestAvatar = u.photoURL;
+                  if (u.firstName || u.lastName)
+                    latestName = `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim();
+                }
+              }
+            } catch (error) {
+              console.error("Error fetching comment user data:", error);
+            }
+            
+            return {
+              id: d.id,
+              username: latestName || data.username || "User",
+              text: data.text,
+              userAvatar: latestAvatar,
+            };
+          })
+        );
         setComments((prev) => ({ ...prev, [p.id]: list.slice(0, 2) }));
       });
       unsubscribers.push(unsub);
@@ -157,8 +200,36 @@ export default function CommunityPage() {
   // === Fetch PetGo Talk Messages ===
   useEffect(() => {
     const q = query(collection(db, "petgoTalk"), orderBy("createdAt", "desc"));
-    const unsub = onSnapshot(q, (snap) => {
-      const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const unsub = onSnapshot(q, async (snap) => {
+      // ✅ PetGo Talk 메시지 작성자 프로필 정보 가져오기
+      const list = await Promise.all(
+        snap.docs.map(async (d) => {
+          const data = d.data() as any;
+          let latestAvatar = data.userAvatar;
+          let latestName = data.username;
+          
+          try {
+            if (data.userId) {
+              const userDoc = await getDoc(doc(db, "users", data.userId));
+              if (userDoc.exists()) {
+                const u = userDoc.data();
+                if (u.photoURL) latestAvatar = u.photoURL;
+                if (u.firstName || u.lastName)
+                  latestName = `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim();
+              }
+            }
+          } catch (error) {
+            console.error("Error fetching talk user data:", error);
+          }
+          
+          return {
+            id: d.id,
+            ...data,
+            username: latestName || data.username || "User",
+            userAvatar: latestAvatar,
+          };
+        })
+      );
       setTalkMessages(list);
     });
     return () => unsub();
@@ -246,15 +317,13 @@ export default function CommunityPage() {
               >
                 {/* HEADER */}
                 <header className="flex items-center gap-3 mb-2">
+                  {/* ✅ 프로필 이미지 (default-Avatar.png 적용) */}
                   <Image
-                    src={
-                      post.userAvatar ||
-                      "https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=200"
-                    }
+                    src={getProfileImage(post.userAvatar)}
                     alt="User Avatar"
                     width={28}
                     height={28}
-                    className="rounded-full border border-gray-300"
+                    className="rounded-full border border-gray-300 object-cover"
                   />
                   <div className="flex-1">
                     <p className="font-semibold text-sm">{post.username}</p>
@@ -282,7 +351,7 @@ export default function CommunityPage() {
                   <p className="mt-3 text-sm">{post.caption}</p>
                 )}
 
-                {/* ACTIONS */}
+                {/* ACTIONS - ✅ Share 버튼 제거 */}
                 <div className="flex items-center gap-6 mt-4 text-sm">
                   <div className="flex items-center gap-1">
                     <Heart size={16} /> {likes[post.id] ?? 0}
@@ -290,16 +359,22 @@ export default function CommunityPage() {
                   <div className="flex items-center gap-1">
                     <MessageCircle size={16} /> {comments[post.id]?.length ?? 0}
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Share2 size={16} /> Share
-                  </div>
                 </div>
 
-                {/* COMMENTS PREVIEW */}
-                <ul className="mt-3 text-sm text-gray-700 space-y-1">
+                {/* COMMENTS PREVIEW - ✅ 프로필 이미지 추가 */}
+                <ul className="mt-3 text-sm text-gray-700 space-y-2">
                   {comments[post.id]?.map((c, i) => (
-                    <li key={i}>
-                      <span className="font-medium">{c.username}</span>: {c.text}
+                    <li key={i} className="flex items-start gap-2">
+                      <Image
+                        src={getProfileImage(c.userAvatar)}
+                        alt={c.username || "User"}
+                        width={20}
+                        height={20}
+                        className="rounded-full border border-gray-300 object-cover shrink-0 mt-0.5"
+                      />
+                      <p className="flex-1">
+                        <span className="font-medium">{c.username}</span>: {c.text}
+                      </p>
                     </li>
                   ))}
                 </ul>
@@ -407,10 +482,13 @@ export default function CommunityPage() {
                   {displayedMessages.map((msg) => (
                     <li key={msg.id} className="border-t pt-3">
                       <div className="flex items-start gap-2 mb-1">
-                        <img
-                          src={msg.userAvatar || "https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=200"}
-                          alt="Avatar"
-                          className="w-6 h-6 rounded-full border border-gray-300"
+                        {/* ✅ PetGo Talk 프로필 이미지 (default-Avatar.png 적용) */}
+                        <Image
+                          src={getProfileImage(msg.userAvatar)}
+                          alt={msg.username}
+                          width={24}
+                          height={24}
+                          className="rounded-full border border-gray-300 object-cover shrink-0"
                         />
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
