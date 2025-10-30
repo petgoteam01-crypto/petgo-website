@@ -1,17 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { useParams, useRouter } from "next/navigation";
+import { ArrowLeft, Send } from "lucide-react";
 import Image from "next/image";
 import {
   collection,
-  onSnapshot,
-  query,
-  orderBy,
-  addDoc,
-  serverTimestamp,
   doc,
+  onSnapshot,
+  addDoc,
+  orderBy,
+  query,
+  serverTimestamp,
   getDoc,
   deleteDoc,
   updateDoc,
@@ -44,22 +44,40 @@ function formatTimeAgo(timestamp: any): string {
 // ✅ 프로필 이미지 헬퍼 함수
 function getProfileImage(userImage: string | null | undefined): string {
   if (!userImage || userImage.trim() === '') {
-    return '/default-Avatar.png';
+    return '/default-avatar.png';
   }
   return userImage;
 }
 
-export default function PetGoTalkPage() {
+export default function GroupChatPage() {
+  const { id } = useParams();
   const router = useRouter();
   const user = auth.currentUser;
-  const [talkMessages, setTalkMessages] = useState<any[]>([]);
-  const [talkInput, setTalkInput] = useState("");
-  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
-  const [editMessageText, setEditMessageText] = useState("");
 
-  // === Fetch PetGo Talk Messages ===
+  const [group, setGroup] = useState<any>(null);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [messageInput, setMessageInput] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
+
+  // === Fetch Group Info ===
   useEffect(() => {
-    const q = query(collection(db, "petgoTalk"), orderBy("createdAt", "desc"));
+    if (!id) return;
+    const unsub = onSnapshot(doc(db, "groups", id as string), (d) => {
+      if (d.exists()) {
+        setGroup({ id: d.id, ...d.data() });
+      }
+    });
+    return () => unsub();
+  }, [id]);
+
+  // === Fetch Messages ===
+  useEffect(() => {
+    if (!id) return;
+    const q = query(
+      collection(db, "groups", id as string, "messages"),
+      orderBy("createdAt", "asc")
+    );
     const unsub = onSnapshot(q, async (snap) => {
       const list = await Promise.all(
         snap.docs.map(async (d) => {
@@ -67,7 +85,7 @@ export default function PetGoTalkPage() {
           let latestAvatar = data.userAvatar;
           let latestName = data.username;
           
-          // ✅ Fetch latest user info from users collection
+          // ✅ Fetch latest user info
           try {
             if (data.userId) {
               const userDocRef = doc(db, "users", data.userId);
@@ -91,55 +109,51 @@ export default function PetGoTalkPage() {
           };
         })
       );
-      setTalkMessages(list);
+      setMessages(list);
     });
     return () => unsub();
-  }, []);
+  }, [id]);
 
-  // === Post PetGo Talk Message ===
-  async function handlePostTalkMessage() {
-    if (!talkInput.trim() || !user) {
-      alert("Please log in to post.");
-      return;
-    }
-    if (talkInput.length > 200) {
-      alert("Message must be 200 characters or less.");
-      return;
-    }
-    await addDoc(collection(db, "petgoTalk"), {
-      text: talkInput.trim(),
+  // === Send Message ===
+  async function handleSendMessage() {
+    if (!messageInput.trim() || !user) return;
+    await addDoc(collection(db, "groups", id as string, "messages"), {
+      text: messageInput.trim(),
       username: user.displayName ?? "User",
       userId: user.uid,
       userAvatar: user.photoURL ?? null,
       createdAt: serverTimestamp(),
     });
-    setTalkInput("");
+    setMessageInput("");
   }
 
   // === Delete Message ===
-  async function handleDeleteMessage(messageId: string) {
+  async function handleDelete(msgId: string) {
     if (!confirm("Are you sure you want to delete this message?")) return;
-    await deleteDoc(doc(db, "petgoTalk", messageId));
+    await deleteDoc(doc(db, "groups", id as string, "messages", msgId));
   }
 
   // === Edit Message ===
-  function startEditMessage(messageId: string, text: string) {
-    setEditingMessageId(messageId);
-    setEditMessageText(text);
+  function startEdit(msgId: string, text: string) {
+    setEditingId(msgId);
+    setEditText(text);
   }
 
-  async function handleUpdateMessage(messageId: string) {
-    if (!editMessageText.trim()) return;
-    if (editMessageText.length > 200) {
-      alert("Message must be 200 characters or less.");
-      return;
-    }
-    await updateDoc(doc(db, "petgoTalk", messageId), {
-      text: editMessageText.trim(),
+  async function handleUpdate(msgId: string) {
+    if (!editText.trim()) return;
+    await updateDoc(doc(db, "groups", id as string, "messages", msgId), {
+      text: editText.trim(),
     });
-    setEditingMessageId(null);
-    setEditMessageText("");
+    setEditingId(null);
+    setEditText("");
   }
+
+  if (!group)
+    return (
+      <main className="min-h-screen flex justify-center items-center text-gray-600">
+        Loading group...
+      </main>
+    );
 
   return (
     <main className="max-w-4xl mx-auto py-10 px-4 bg-[#F9F6F1] min-h-screen text-[#111827]">
@@ -151,118 +165,110 @@ export default function PetGoTalkPage() {
         >
           <ArrowLeft size={18} /> Back to Community
         </button>
-        <h1 className="text-3xl font-bold text-[#111827]">PetGo Talk</h1>
-        <p className="text-sm text-gray-600 mt-2">
-          Quick shoutouts, meetups, buy & sell, or tips. Be kind and keep it pet-friendly!
+        <h1 className="text-3xl font-bold text-[#111827]">{group.name}</h1>
+        <p className="text-sm text-gray-500">
+          {messages.length} {messages.length === 1 ? "message" : "messages"}
         </p>
       </div>
 
-      {/* Post Input */}
-      <div className="bg-white rounded-xl shadow p-6 mb-6">
-        <textarea
-          placeholder='e.g., "Anyone at Withrow Park this Saturday morning?"'
-          value={talkInput}
-          onChange={(e) => setTalkInput(e.target.value)}
-          maxLength={200}
-          className="w-full border rounded-lg p-3 text-sm mb-2 resize-none focus:outline-[#8B6A43] text-[#111827]"
-          rows={3}
-        />
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-gray-500">
-            {200 - talkInput.length} characters left
-          </span>
-          <button
-            onClick={handlePostTalkMessage}
-            className="bg-[#8B6A43] text-white px-4 py-2 rounded-lg text-sm hover:bg-[#B58963]"
-          >
-            Post
-          </button>
-        </div>
-      </div>
-
-      {/* Messages List */}
-      <div className="bg-white rounded-xl shadow p-6">
-        <h2 className="text-xl font-bold mb-4">All Messages</h2>
-        {talkMessages.length === 0 ? (
+      {/* Messages */}
+      <div className="bg-white rounded-xl shadow p-6 mb-6 max-h-[500px] overflow-y-auto">
+        {messages.length === 0 ? (
           <p className="text-center text-gray-500 py-10">
-            No messages yet. Be the first to start a conversation!
+            No messages yet. Start the conversation!
           </p>
         ) : (
           <ul className="space-y-4">
-            {talkMessages.map((msg) => (
-              <li key={msg.id} className="border-b pb-4 last:border-b-0">
-                <div className="flex items-start gap-3">
-                  {/* ✅ 프로필 이미지 (default-Avatar.png 적용) */}
+            {messages.map((msg) => (
+              <li key={msg.id} className="flex gap-3">
+                {/* ✅ 프로필 이미지 (default-Avatar.png 적용) */}
+                <div className="relative w-10 h-10 rounded-full overflow-hidden border border-gray-300 shrink-0">
                   <Image
                     src={getProfileImage(msg.userAvatar)}
-                    alt={msg.username}
-                    width={40}
-                    height={40}
-                    className="rounded-full border border-gray-300 object-cover shrink-0"
+                    alt={msg.username || "User"}
+                    fill
+                    className="object-cover"
                   />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <p className="font-semibold text-sm text-[#111827]">
-                        {msg.username}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        {formatTimeAgo(msg.createdAt)}
-                      </p>
-                      {user && msg.userId === user.uid && editingMessageId !== msg.id && (
-                        <div className="flex gap-2 ml-auto">
-                          <button
-                            onClick={() => startEditMessage(msg.id, msg.text)}
-                            className="text-xs text-[#8B6A43] hover:underline"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteMessage(msg.id)}
-                            className="text-xs text-red-500 hover:underline"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                    {editingMessageId === msg.id ? (
-                      <div>
-                        <textarea
-                          value={editMessageText}
-                          onChange={(e) => setEditMessageText(e.target.value)}
-                          maxLength={200}
-                          className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-[#8B6A43] text-[#111827] mb-2 resize-none"
-                          rows={3}
-                        />
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-xs text-gray-500">
-                            {200 - editMessageText.length} characters left
-                          </span>
-                        </div>
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleUpdateMessage(msg.id)}
-                            className="px-3 py-1 bg-[#8B6A43] text-white rounded text-xs hover:bg-[#B58963]"
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={() => setEditingMessageId(null)}
-                            className="px-3 py-1 border border-gray-300 text-gray-700 rounded text-xs hover:bg-gray-50"
-                          >
-                            Cancel
-                          </button>
-                        </div>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <p className="font-semibold text-sm text-[#111827]">
+                      {msg.username}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {formatTimeAgo(msg.createdAt)}
+                    </p>
+                    {user && msg.userId === user.uid && editingId !== msg.id && (
+                      <div className="flex gap-2 ml-auto">
+                        <button
+                          onClick={() => startEdit(msg.id, msg.text)}
+                          className="text-xs text-[#8B6A43] hover:underline"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(msg.id)}
+                          className="text-xs text-red-500 hover:underline"
+                        >
+                          Delete
+                        </button>
                       </div>
-                    ) : (
-                      <p className="text-sm text-[#111827]">{msg.text}</p>
                     )}
                   </div>
+                  {editingId === msg.id ? (
+                    <div>
+                      <input
+                        type="text"
+                        value={editText}
+                        onChange={(e) => setEditText(e.target.value)}
+                        className="w-full border rounded-lg px-3 py-2 text-sm focus:outline-[#8B6A43] text-[#111827] mb-2"
+                      />
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleUpdate(msg.id)}
+                          className="px-3 py-1 bg-[#8B6A43] text-white rounded text-xs hover:bg-[#B58963]"
+                        >
+                          Save
+                        </button>
+                        <button
+                          onClick={() => setEditingId(null)}
+                          className="px-3 py-1 border border-gray-300 text-gray-700 rounded text-xs hover:bg-gray-50"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-[#111827]">{msg.text}</p>
+                  )}
                 </div>
               </li>
             ))}
           </ul>
         )}
+      </div>
+
+      {/* Message Input */}
+      <div className="bg-white rounded-xl shadow p-4">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Type a message..."
+            value={messageInput}
+            onChange={(e) => setMessageInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") handleSendMessage();
+            }}
+            className="flex-1 border rounded-lg px-4 py-2 text-sm focus:outline-[#8B6A43] text-[#111827] placeholder:text-gray-400"
+          />
+          <button
+            onClick={handleSendMessage}
+            className="bg-[#8B6A43] text-white px-6 py-2 rounded-lg hover:bg-[#B58963] flex items-center gap-2"
+          >
+            <Send size={16} />
+            Send
+          </button>
+        </div>
       </div>
     </main>
   );

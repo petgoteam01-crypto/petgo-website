@@ -39,7 +39,7 @@ type Comment = {
 // ✅ 프로필 이미지 헬퍼 함수
 function getProfileImage(userImage: string | null | undefined): string {
   if (!userImage || userImage.trim() === '') {
-    return '/default-Avatar.png';
+    return '/default-avatar.png';
   }
   return userImage;
 }
