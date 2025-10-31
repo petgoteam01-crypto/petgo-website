@@ -229,6 +229,8 @@ export default function Week38Page() {
         </div>
       </section>
 
+      
+
       {/* ===== CORE PRINCIPLES ===== */}
       <section className="max-w-3xl mx-auto mb-12 bg-[#fffaf5] border border-[#e6dccf] p-8 rounded-2xl shadow-sm">
         <h4 className="font-semibold text-[#8B6A43] mb-4">
