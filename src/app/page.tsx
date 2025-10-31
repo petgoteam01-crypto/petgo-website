@@ -14,7 +14,7 @@ export default function Home() {
 <section className="relative w-full h-[85vh] overflow-hidden flex items-center justify-center">
   {/* ✅ Background image */}
   <Image
-    src="/hero-image.jpg" // replace with your actual image filename
+    src="/hero-image1.jpg" // replace with your actual image filename
     alt="Happy pet parents with their dog"
     fill
     priority
