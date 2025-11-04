@@ -477,15 +477,7 @@ const addNewPet = async () => {
             <section className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm flex justify-between items-center">
               <div className="flex items-center gap-4">
                 <div className="relative w-20 h-20">
-                  <Image
-                    src={
-                      user?.photoURL ||
-                      "https://images.unsplash.com/photo-1607746882042-944635dfe10e?w=400"
-                    }
-                    alt="Profile"
-                    fill
-                    className="rounded-full object-cover border-2 border-[#8B6A43]"
-                  />
+                  
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold text-[#111827]">
