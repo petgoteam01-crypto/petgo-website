@@ -58,8 +58,8 @@ export default function Footer() {
           <div className="md:col-span-2">
             <h3 className="text-3xl font-semibold text-[#111827]">Contact & Connect</h3>
             <div className="mt-7 space-y-5 text-[17px]">
-              <a href="mailto:helpcenter.petgo@gmail.com" className="block hover:opacity-80 text-[#111827]">
-                helpcenter.petgo@gmail.com
+              <a href="mailto:support@petgoglobal.com" className="block hover:opacity-80 text-[#111827]">
+                support@petgoglobal.com
               </a>
               <div className="pt-2 flex items-center gap-5">
                 <a

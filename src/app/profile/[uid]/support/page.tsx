@@ -22,10 +22,10 @@ export default function SupportPage() {
             <h3 className="font-medium text-[#111827] mb-1">Contact Support</h3>
             <p className="text-sm text-[#111827]">
               <a
-                href="mailto:helpcenter.petgo@gmail.com"
+                href="mailto:support@petgoglobal.com"
                 className="text-[#8B6A43] underline"
               >
-                helpcenter.petgo@gmail.com
+                support@petgoglobal.com
               </a>
             </p>
             <p className="text-sm text-red-600 mt-1">
