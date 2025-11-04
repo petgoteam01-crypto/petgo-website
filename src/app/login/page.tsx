@@ -10,24 +10,61 @@ import {
   signInWithEmailAndPassword,
   GoogleAuthProvider,
   signInWithPopup,
+  fetchSignInMethodsForEmail,
+  EmailAuthProvider,
+  linkWithCredential,
   onAuthStateChanged,
 } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 
 export default function LoginPage() {
   const router = useRouter();
-
   const [form, setForm] = useState({ email: "", password: "" });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // ✅ 로그인 상태 감지 (이미 로그인 시 홈으로 이동)
+  // ✅ 로그인 상태 감지 + Firestore 동기화
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) router.push("/"); // 👈 홈으로 이동
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        await createOrUpdateUser(user);
+        router.push("/");
+      }
     });
     return () => unsubscribe();
   }, [router]);
+
+  // ✅ Firestore user 문서 자동 생성 / 업데이트 함수
+  const createOrUpdateUser = async (user: any) => {
+    try {
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+
+      const data = {
+        uid: user.uid,
+        email: user.email,
+        name: user.displayName || "",
+        username:
+          user.email?.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "") || "",
+        provider: user.providerData?.[0]?.providerId || "email",
+        linkedAccounts: [user.providerData?.[0]?.providerId || "email"],
+        photoURL: user.photoURL || "",
+        lastLogin: serverTimestamp(),
+      };
+
+      if (!userSnap.exists()) {
+        await setDoc(userRef, {
+          ...data,
+          joinedAt: serverTimestamp(),
+        });
+      } else {
+        await setDoc(userRef, data, { merge: true });
+      }
+    } catch (err) {
+      console.error("❌ Failed to sync Firestore user:", err);
+    }
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -46,10 +83,11 @@ export default function LoginPage() {
 
     try {
       setLoading(true);
-      await signInWithEmailAndPassword(auth, form.email, form.password);
-      router.push("/"); // 👈 로그인 성공 시 홈으로 이동
+      const res = await signInWithEmailAndPassword(auth, form.email, form.password);
+      await createOrUpdateUser(res.user);
+      router.push("/");
     } catch (err: any) {
-      let message = "Please enter a vaild email address. Try again.";
+      let message = "Please enter a valid email address. Try again.";
       if (err.code === "auth/invalid-email") {
         message = "Please enter a valid email address.";
       } else if (err.code === "auth/user-not-found") {
@@ -67,15 +105,42 @@ export default function LoginPage() {
     }
   };
 
-  // ✅ Google 로그인
+  // ✅ 구글 로그인 + 이메일 계정 병합 + Firestore 동기화
   const handleGoogleLogin = async () => {
     try {
+      setLoading(true);
       const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      router.push("/"); // 👈 홈으로 이동
+      const result = await signInWithPopup(auth, provider);
+      await createOrUpdateUser(result.user);
+      router.push("/");
     } catch (err: any) {
-      console.error(err);
-      setError("Google login failed. Please try again.");
+      // 🧩 동일 이메일 중복 (이메일로 이미 가입한 경우)
+      if (err.code === "auth/account-exists-with-different-credential") {
+        const pendingCred = GoogleAuthProvider.credentialFromError(err);
+        const email = err.customData?.email;
+        const methods = await fetchSignInMethodsForEmail(auth, email);
+
+        if (methods.includes("password")) {
+          const password = prompt(
+            "This email is already registered with a password. Enter it to link with Google:"
+          );
+          if (password && pendingCred) {
+            const emailCred = EmailAuthProvider.credential(email, password);
+            const userCred = await signInWithEmailAndPassword(auth, email, password);
+            await linkWithCredential(userCred.user, pendingCred);
+            await createOrUpdateUser(userCred.user);
+            alert("✅ Google account linked successfully!");
+            router.push("/");
+          } else {
+            alert("Linking cancelled or invalid credential.");
+          }
+        }
+      } else {
+        console.error("❌ Google login failed:", err);
+        setError("Google login failed. Please try again.");
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -117,7 +182,6 @@ export default function LoginPage() {
             className="w-full border border-gray-300 rounded-full p-2 px-4 focus:outline-none"
           />
 
-          {/* ✅ 에러 메시지 */}
           {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
 
           <div className="flex justify-between text-sm text-gray-700 mt-2">
@@ -147,7 +211,6 @@ export default function LoginPage() {
 
         {/* ✅ Social Login Buttons */}
         <div className="flex justify-center gap-4">
-          {/* Google 로그인 */}
           <button
             onClick={handleGoogleLogin}
             className="flex items-center justify-center w-14 h-14 rounded-full bg-gray-100 shadow hover:bg-gray-200 transition"
@@ -155,7 +218,6 @@ export default function LoginPage() {
             <FcGoogle size={26} />
           </button>
 
-          {/* Apple 로그인 (비활성화 상태 + 로고 아이콘 적용) */}
           <button
             disabled
             className="flex items-center justify-center w-14 h-14 rounded-full bg-gray-100 shadow opacity-60 cursor-not-allowed"
@@ -165,7 +227,6 @@ export default function LoginPage() {
           </button>
         </div>
 
-        {/* ✅ 회원가입 링크 */}
         <p className="text-center mt-8 text-sm text-gray-700">
           Don’t have an account?{" "}
           <Link

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { createUserWithEmailAndPassword, updateProfile, signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
+import { doc, setDoc, getDocs, collection, query, where, serverTimestamp } from "firebase/firestore";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -25,36 +26,72 @@ export default function SignupPage() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  // ✅ Firestore user 문서 생성 함수
+  const createUserDoc = async (user: any) => {
+    const userRef = doc(db, "users", user.uid);
+    await setDoc(userRef, {
+      uid: user.uid,
+      email: user.email,
+      name: `${form.firstName} ${form.lastName}`.trim(),
+      username: form.username,
+      provider: "email",
+      linkedAccounts: ["email"],
+      photoURL: user.photoURL || "",
+      joinedAt: serverTimestamp(),
+      lastLogin: serverTimestamp(),
+    });
+  };
+
+  // ✅ 유저네임 중복 체크
+  const checkUsernameDuplicate = async (username: string) => {
+    const q = query(collection(db, "users"), where("username", "==", username));
+    const snap = await getDocs(q);
+    return !snap.empty;
+  };
+
+  // ✅ 회원가입
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    // ✅ 기본 유효성 검사
+    // 유효성 검사
     if (form.password !== form.confirmPassword) {
       setError("Passwords do not match.");
       return;
     }
 
-    if (form.username.length < 6 || /[^a-zA-Z0-9]/.test(form.username)) {
-      setError("Username must be at least 6 characters and contain no special symbols.");
+    if (form.username.length < 4 || /[^a-zA-Z0-9]/.test(form.username)) {
+      setError("Username must be at least 4 characters and contain only letters or numbers.");
       return;
     }
 
     try {
       setLoading(true);
-      const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
 
+      // ✅ 유저네임 중복 방지
+      const duplicate = await checkUsernameDuplicate(form.username);
+      if (duplicate) {
+        setError("This username is already taken. Please choose another one.");
+        setLoading(false);
+        return;
+      }
+
+      // ✅ Firebase Auth에 계정 생성
+      const userCredential = await createUserWithEmailAndPassword(auth, form.email, form.password);
       await updateProfile(userCredential.user, {
         displayName: `${form.firstName} ${form.lastName}`,
       });
 
-      // ✅ 회원가입 직후 자동 로그인 방지
+      // ✅ Firestore user 문서 생성
+      await createUserDoc(userCredential.user);
+
+      // ✅ 회원가입 후 자동 로그아웃
       await signOut(auth);
 
       alert("🎉 Account created successfully! Please sign in to continue.");
       router.push("/login");
-
     } catch (err: any) {
+      console.error(err);
       let message = "Something went wrong. Please try again.";
 
       if (err.code === "auth/email-already-in-use") {
@@ -129,8 +166,8 @@ export default function SignupPage() {
             required
             className="w-full border-b border-gray-400 bg-transparent focus:outline-none p-2"
           />
-          <p className="text-xs text-red-500">
-            *Username must be at least 6 characters and contain no special characters.
+          <p className="text-xs text-gray-600">
+            *Username must be at least 4 characters (letters or numbers only)
           </p>
 
           <input
@@ -142,7 +179,7 @@ export default function SignupPage() {
             required
             className="w-full border-b border-gray-400 bg-transparent focus:outline-none p-2"
           />
-          <p className="text-xs text-red-500">*Password must be at least 6 characters.</p>
+          <p className="text-xs text-gray-600">*Password must be at least 6 characters.</p>
 
           <input
             type="password"
@@ -153,13 +190,6 @@ export default function SignupPage() {
             required
             className="w-full border-b border-gray-400 bg-transparent focus:outline-none p-2"
           />
-
-          <div className="flex items-center gap-2 text-sm mt-3">
-            <input type="checkbox" id="remember" className="accent-[#8B6A43]" />
-            <label htmlFor="remember" className="text-gray-700">
-              Remember me
-            </label>
-          </div>
 
           {/* ✅ 에러 메시지 */}
           {error && <p className="text-sm text-red-600 mt-2">{error}</p>}
